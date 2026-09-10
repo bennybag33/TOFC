@@ -1,30 +1,36 @@
-const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-const { Pool } = require('pg');
+import { SlashCommandBuilder } from 'discord.js';
+import { Pool } from 'pg';
 
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
 });
 
-module.exports = {
+export default {
   data: new SlashCommandBuilder()
     .setName('question')
-    .setDescription('Ask a question and get an answer'),
+    .setDescription('Ask a question and get an answer')
+    .addStringOption(option =>
+      option.setName('query')
+        .setDescription('Your question')
+        .setRequired(true)
+    ),
   async execute(interaction) {
-    // Create a modal (dialog box)
-    const modal = new ModalBuilder()
-      .setCustomId('question_modal')
-      .setTitle('Ask a Question');
-
-    const questionInput = new TextInputBuilder()
-      .setCustomId('question_input')
-      .setLabel('What is your question?')
-      .setStyle(TextInputStyle.Short)
-      .setPlaceholder('e.g., What is price action?')
-      .setRequired(true);
-
-    const actionRow = new ActionRowBuilder().addComponents(questionInput);
-    modal.addComponents(actionRow);
-
-    await interaction.showModal(modal);
+    const userQuestion = interaction.options.getString('query');
+    
+    try {
+      const result = await pool.query(
+        'SELECT answers FROM qa_pairs WHERE LOWER(questions) = LOWER($1)',
+        [userQuestion]
+      );
+      
+      if (result.rows.length > 0) {
+        await interaction.reply(`**Q:** ${userQuestion}\n**A:** ${result.rows[0].answers}`);
+      } else {
+        await interaction.reply(`No answer found for: "${userQuestion}"`);
+      }
+    } catch (error) {
+      console.error('Database error:', error);
+      await interaction.reply('An error occurred.');
+    }
   },
 };
