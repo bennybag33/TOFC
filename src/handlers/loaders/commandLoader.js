@@ -236,7 +236,7 @@ function prepareCommandsForRegistration(commands) {
     return truncated;
 }
 
-async function registerGlobalCommands(client, clientId, commands, totalSubcommands) {
+async function registerGlobalCommands(client, clientId, guildId, commands, totalSubcommands) {
     if (!clientId) {
         throw new Error('CLIENT_ID is required for slash command registration');
     }
@@ -245,12 +245,30 @@ async function registerGlobalCommands(client, clientId, commands, totalSubcomman
         throw new Error('Discord REST client is not available for slash command registration');
     }
 
-    logger.info(`Preparing to register ${totalSubcommands + commands.length} commands globally`);
     logger.info('Validating commands before registration...');
     validateCommands(commands);
     logger.info('Command validation passed');
 
     const commandsToRegister = prepareCommandsForRegistration(commands);
+
+    if (guildId) {
+        const guildEndpoint = `/applications/${clientId}/guilds/${guildId}/commands`;
+
+        logger.info(`Preparing to register ${totalSubcommands + commands.length} commands at guild level (guild: ${guildId})`);
+
+        if (botConfig.commands?.deleteCommands) {
+            logger.info('Clearing existing guild commands before registration...');
+            await client.rest.put(guildEndpoint, { body: [] });
+        }
+
+        logger.info(`Registering ${commandsToRegister.length} guild commands for guild ${guildId}...`);
+        await client.rest.put(guildEndpoint, { body: commandsToRegister });
+        logger.info(`Successfully registered ${commandsToRegister.length} guild commands (instant availability, no global sync delay)`);
+        return;
+    }
+
+    logger.warn('No guildId available, falling back to global command registration');
+    logger.info(`Preparing to register ${totalSubcommands + commands.length} commands globally`);
 
     if (botConfig.commands?.deleteCommands) {
         logger.info('Clearing existing global commands before registration...');
@@ -264,11 +282,11 @@ async function registerGlobalCommands(client, clientId, commands, totalSubcomman
 }
 
 export async function registerCommands(client, options = {}) {
-    const { clientId = null } = options;
+    const { clientId = null, guildId = null } = options;
 
     try {
         const { commands, totalSubcommands } = collectCommandPayloads(client);
-        await registerGlobalCommands(client, clientId, commands, totalSubcommands);
+        await registerGlobalCommands(client, clientId, guildId, commands, totalSubcommands);
     } catch (error) {
         logger.error('Error registering commands:', error);
         throw error;
