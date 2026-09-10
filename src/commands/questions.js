@@ -1,43 +1,30 @@
-INSERT INTO qa_pairs (questions, answers) VALUES
-('What is a common mistake in Context reading', 'A common mistake is ignoring the broader market structure and focusing only on recent price action.'),
-('What is a common mistake in Location reading', 'Failing to understand where price is relative to previous support/resistance levels and value areas.'),
-('What is a common mistake in Confirmation reading', 'Entering too early without waiting for multiple confirmations from different tools like price action and order flow.'),
-('When do I enter on the models', 'Enter when price reaches key levels confirmed by your chosen models and shows reversal signals.'),
-('How to properly read CVD', 'CVD (Cumulative Volume Delta) shows buying vs selling pressure. Rising CVD = buyer control, falling = seller control.'),
-('How to read TPO', 'TPO (Time Price Opportunity) shows how much time price spent at each level. Higher TPO = more trading activity.'),
-('How to set up deepcharts', 'Access Deepcharts settings in your trading platform, connect your data source, and configure chart timeframes and indicators.'),
-('How to set up deepcharts VP', 'VP (Volume Profile) in Deepcharts: enable volume profile, select your timeframe, and identify VAH, POC, and VAL levels.'),
-('Where did my trade go wrong', 'Review your entry/exit logic, check if price action matched your setup, and identify where you ignored your rules.'),
-('Order Flow', 'Order flow is the real-time buying and selling activity in the market, showing where smart money is accumulating or distributing.'),
-('What is absorption', 'Absorption occurs when large bids/asks are filled without significant price movement, indicating institutional accumulation or distribution.'),
-('What is CVD and how do I use it', 'CVD tracks cumulative buying vs selling volume. Use it to confirm trends and identify divergences from price action.'),
-('What does positive/negative delta mean', 'Positive delta = more buying volume, negative delta = more selling volume. Use to confirm trend direction.'),
-('What is an imbalance', 'An imbalance is where large buy or sell orders exist without offsetting orders, creating potential for rapid price movement.'),
-('How do I spot trapped traders', 'Look for price reversals after breakouts with volume spikes in the opposite direction, trapping those who followed the breakout.'),
-('What is exhaustion', 'Exhaustion occurs when buying or selling pressure weakens despite continued price movement, often signaling a reversal.'),
-('What is the difference between aggressive buyers and sellers', 'Aggressive buyers lift offers; aggressive sellers hit bids. Aggressive activity shows conviction and can indicate trend continuation.'),
-('How do I use footprint charts', 'Footprint charts show buy/sell volume at each price level per candle. Use to identify which levels had most trading activity.'),
-('What confirms a reversal using order flow', 'Divergence between price and CVD, absorption at key levels, and sudden shift from aggressive buyers to aggressive sellers confirm reversals.'),
-('What is the difference between absorption and exhaustion', 'Absorption = large orders soaking up volume silently; exhaustion = buying/selling pressure weakening despite price movement.'),
-('What is gamma exposure (GEX)', 'GEX measures option dealers'' hedging pressure. Positive GEX supports reversals; negative GEX supports continuations.'),
-('What are call walls and put walls', 'Call walls = large sell orders at strike prices (bearish); put walls = large buy orders at strike prices (bullish).'),
-('What is HVL', 'HVL (High Volume Level) is a price level with significantly more trading activity, often acting as support/resistance.'),
-('What is 0DTE flow', '0DTE (Zero Days To Expiration) options flow shows last-day activity, often causing sharp price moves to strike prices.'),
-('How do options dealers hedge', 'Dealers hedge by buying/selling underlying assets opposite their option exposure to remain delta neutral.'),
-('What is positive vs negative gamma', 'Positive gamma = acceleration into moves (supportive); negative gamma = deceleration (dealers hedging against moves).'),
-('Why does price pin to certain strikes', 'Price pins to strikes where large call/put walls exist because dealers manage hedging and max pain dynamics.'),
-('How do gamma levels act as support/resistance', 'High gamma creates sticky support/resistance as dealers aggressively hedge large option positions at those levels.'),
-('What makes a gamma level strong', 'Large open interest, high IV, and significant dealer exposure make gamma levels strong support/resistance.'),
-('How do I combine options flow with price action', 'Use options flow to identify where dealers are hedged; combine with price action support/resistance to confirm trade setups.'),
-('What is value', 'Value is the fair price range where the market spent most time; represented by VAL (Value Area Low) to VAH (Value Area High).'),
-('What are VAH, VAL and POC', 'VAH (Value Area High) and VAL (Value Area Low) bracket the value range; POC (Point of Control) is the most traded price.'),
-('What is price acceptance vs rejection', 'Acceptance = price stays and trades at a level; rejection = price quickly moves away from a level.'),
-('What is balance vs imbalance', 'Balance = two-sided market with buyers and sellers; imbalance = one-sided, creating directional moves.'),
-('What is an initiative move', 'An initiative move is when one side (buyers or sellers) aggressively pushes price in a new direction against previous balance.'),
-('What is responsive buying/selling', 'Responsive activity = reactions to price moves; occurs when the market is balanced and neither side dominates.'),
-('What is excess', 'Excess is price movement beyond the value range, often leading to pullbacks into value as market rebalances.'),
-('What is a failed auction', 'A failed auction occurs when price tries to extend higher or lower but fails, reversing back into the value area.'),
-('What is a poor high or poor low', 'A poor high/low is a level with low volume and quick rejection, indicating weak conviction and likely reversal.'),
-('What is a single print', 'A single print is a price level traded only once in a session, often acting as support/resistance until tested again.'),
-('How do I identify rotational vs trending markets', 'Rotational = price bouncing within value area; trending = price breaking value and establishing new value areas.'),
-('What does the market need to do to continue higher/lower', 'Market must break previous highs/lows on volume, establish new value, and show no rejection at new price levels.');
+const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL,
+});
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('question')
+    .setDescription('Ask a question and get an answer'),
+  async execute(interaction) {
+    // Create a modal (dialog box)
+    const modal = new ModalBuilder()
+      .setCustomId('question_modal')
+      .setTitle('Ask a Question');
+
+    const questionInput = new TextInputBuilder()
+      .setCustomId('question_input')
+      .setLabel('What is your question?')
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder('e.g., What is price action?')
+      .setRequired(true);
+
+    const actionRow = new ActionRowBuilder().addComponents(questionInput);
+    modal.addComponents(actionRow);
+
+    await interaction.showModal(modal);
+  },
+};
