@@ -35,6 +35,15 @@ function calculateSimilarity(str1, str2) {
  return 1 - distance / maxLength;
 }
 
+function getKeywords(text) {
+ return text.toLowerCase().split(/\s+/).filter(word => word.length > 2);
+}
+
+function calculateKeywordOverlap(userWords, dbWords) {
+ const matches = userWords.filter(word => dbWords.some(dbWord => calculateSimilarity(word, dbWord) > 0.7));
+ return matches.length / Math.max(userWords.length, dbWords.length);
+}
+
 export default {
  data: new SlashCommandBuilder()
  .setName('question')
@@ -46,6 +55,7 @@ export default {
  ),
  async execute(interaction) {
  const userQuestion = interaction.options.getString('query');
+ const userKeywords = getKeywords(userQuestion);
  
  try {
  const result = await pool.query('SELECT questions, answers FROM qa_pairs');
@@ -57,17 +67,20 @@ export default {
  
  let bestMatch = null;
  let bestScore = 0;
- const threshold = 0.6; // 60% similarity required
  
  for (const row of result.rows) {
- const similarity = calculateSimilarity(userQuestion, row.questions);
- if (similarity > bestScore) {
- bestScore = similarity;
+ const dbKeywords = getKeywords(row.questions);
+ const keywordScore = calculateKeywordOverlap(userKeywords, dbKeywords);
+ const levenScore = calculateSimilarity(userQuestion, row.questions);
+ const combinedScore = (keywordScore * 0.6) + (levenScore * 0.4);
+ 
+ if (combinedScore > bestScore) {
+ bestScore = combinedScore;
  bestMatch = row;
  }
  }
  
- if (bestScore >= threshold) {
+ if (bestScore >= 0.5) {
  await interaction.reply(`**Q:** ${bestMatch.questions}\n**A:** ${bestMatch.answers}`);
  } else {
  await interaction.reply(`No similar question found. Try rewording your question.`);
