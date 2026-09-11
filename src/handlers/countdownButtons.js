@@ -82,10 +82,10 @@ function startCountdown(countdownId, countdownData, activeCountdowns) {
                     components: [],
                 });
 
-                if (countdownData.pingMention) {
+                if (countdownData.creatorMention) {
                     try {
                         await countdownData.message.channel.send({
-                            content: `${countdownData.pingMention} ⏰ **${countdownData.title}** has ended!`,
+                            content: `${countdownData.creatorMention} ⏰ Your countdown **${countdownData.title}** has ended!`,
                         });
                     } catch (error) {
                         logger.error("Error sending countdown ping:", error);
