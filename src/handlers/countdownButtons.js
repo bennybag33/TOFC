@@ -82,6 +82,16 @@ function startCountdown(countdownId, countdownData, activeCountdowns) {
                     components: [],
                 });
 
+                if (countdownData.pingMention) {
+                    try {
+                        await countdownData.message.channel.send({
+                            content: `${countdownData.pingMention} ⏰ **${countdownData.title}** has ended!`,
+                        });
+                    } catch (error) {
+                        logger.error("Error sending countdown ping:", error);
+                    }
+                }
+
                 cleanupCountdown(countdownId, activeCountdowns);
             }
         } catch (error) {
