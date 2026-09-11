@@ -33,12 +33,6 @@ export default {
                 .setName("title")
                 .setDescription("Optional title for the countdown")
                 .setRequired(false),
-        )
-        .addMentionableOption((option) =>
-            option
-                .setName("ping")
-                .setDescription("User or role to ping when the timer ends")
-                .setRequired(false),
         ),
 
     async execute(interaction) {
@@ -55,7 +49,6 @@ export default {
         const minutes = interaction.options.getInteger("minutes") || 0;
         const seconds = interaction.options.getInteger("seconds") || 0;
         const title = interaction.options.getString("title") || "Countdown Timer";
-        const pingTarget = interaction.options.getMentionable("ping");
 
         const totalSeconds = minutes * 60 + seconds;
 
@@ -88,7 +81,7 @@ export default {
             remainingTime: totalSeconds * 1000,
             isPaused: false,
             title,
-            pingMention: pingTarget ? pingTarget.toString() : null,
+            creatorMention: `<@${interaction.user.id}>`,
             lastUpdate: Date.now(),
             interval: null,
         };
