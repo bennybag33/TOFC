@@ -84,6 +84,22 @@ export default {
  await interaction.reply(`**Q:** ${bestMatch.questions}\n**A:** ${bestMatch.answers}`);
  } else {
  await interaction.reply(`No similar question found. Try rewording your question or request assistance from a staff member!`);
+
+ try {
+ const logChannel = interaction.guild.channels.cache.find(
+ (channel) => channel.name === 'auto-mod'
+ );
+
+ if (logChannel) {
+ await logChannel.send(
+ `📋 **Unanswered Question**\n**User:** <@${interaction.user.id}>\n**Question:** ${userQuestion}\n**Best score:** ${bestScore.toFixed(2)}${bestMatch ? `\n**Closest match:** ${bestMatch.questions}` : ''}`
+ );
+ } else {
+ console.error('Could not find #auto-mod channel to log failed question.');
+ }
+ } catch (logError) {
+ console.error('Error logging failed question:', logError);
+ }
  }
  } catch (error) {
  console.error('Database error:', error);
