@@ -83,7 +83,7 @@ export default {
  if (bestScore >= 0.5) {
  await interaction.reply(`**Q:** ${bestMatch.questions}\n**A:** ${bestMatch.answers}`);
  } else {
- await interaction.reply(`No similar question found. Try rewording your question.`);
+ await interaction.reply(`No similar question found. Try rewording your question or request assistance from a staff member!`);
  }
  } catch (error) {
  console.error('Database error:', error);
