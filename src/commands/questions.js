@@ -86,9 +86,7 @@ export default {
  await interaction.reply(`No similar question found. Try rewording your question or request assistance from a staff member!`);
 
  try {
- const logChannel = interaction.guild.channels.cache.find(
- (channel) => channel.name === 'auto-mod'
- );
+ const logChannel = await interaction.client.channels.fetch(process.env.LOG_CHANNEL_ID);
 
  if (logChannel) {
  await logChannel.send(
