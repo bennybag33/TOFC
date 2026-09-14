@@ -56,9 +56,16 @@ export default {
  async execute(interaction) {
  const userQuestion = interaction.options.getString('query');
  const userKeywords = getKeywords(userQuestion);
+
+ // Check if this user is allowed to see premium questions right now
+ const hasPremiumRole = interaction.member.roles.cache.has(process.env.PREMIUM_ROLE_ID);
+ const isInPremiumChannel = interaction.channelId === process.env.PREMIUM_CHANNEL_ID;
+ const canSeePremium = hasPremiumRole && isInPremiumChannel;
  
  try {
- const result = await pool.query('SELECT questions, answers FROM qa_pairs');
+ const result = canSeePremium
+ ? await pool.query('SELECT questions, answers FROM qa_pairs')
+ : await pool.query("SELECT questions, answers FROM qa_pairs WHERE tier = 'Rookie'");
  
  if (result.rows.length === 0) {
  await interaction.reply('No Q&A pairs found in database.');
