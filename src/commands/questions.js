@@ -4,6 +4,8 @@ const pool = new Pool({
  connectionString: process.env.POSTGRES_URL,
 });
 
+const ROOKIE_DAILY_LIMIT = 10;
+
 function levenshteinDistance(str1, str2) {
  const track = Array(str2.length + 1).fill(null).map(() =>
  Array(str1.length + 1).fill(null));
@@ -56,13 +58,53 @@ export default {
  async execute(interaction) {
  const userQuestion = interaction.options.getString('query');
  const userKeywords = getKeywords(userQuestion);
+ const userId = interaction.user.id;
 
- // Check if this user is allowed to see premium questions right now
  const hasPremiumRole = interaction.member.roles.cache.has(process.env.PREMIUM_ROLE_ID);
  const isInPremiumChannel = interaction.channelId === process.env.PREMIUM_CHANNEL_ID;
  const canSeePremium = hasPremiumRole && isInPremiumChannel;
- 
+
  try {
+ // Enforce daily limit for non-premium users only
+ if (!hasPremiumRole) {
+ const usageResult = await pool.query(
+ 'SELECT count, last_reset FROM question_usage WHERE user_id = $1',
+ [userId]
+ );
+
+ const today = new Date().toISOString().slice(0, 10);
+
+ if (usageResult.rows.length === 0) {
+ // First time this user has ever asked - create their row
+ await pool.query(
+ 'INSERT INTO question_usage (user_id, count, last_reset) VALUES ($1, 1, $2)',
+ [userId, today]
+ );
+ } else {
+ const { count, last_reset } = usageResult.rows[0];
+ const lastResetDate = new Date(last_reset).toISOString().slice(0, 10);
+
+ if (lastResetDate !== today) {
+ // New day - reset their count to 1 (this question counts as the first)
+ await pool.query(
+ 'UPDATE question_usage SET count = 1, last_reset = $1 WHERE user_id = $2',
+ [today, userId]
+ );
+ } else if (count >= ROOKIE_DAILY_LIMIT) {
+ await interaction.reply({
+ content: `🚫 You've reached your daily limit of ${ROOKIE_DAILY_LIMIT} questions. Your limit resets tomorrow, or upgrade to Premium for unlimited questions!`,
+ flags: ["Ephemeral"],
+ });
+ return;
+ } else {
+ await pool.query(
+ 'UPDATE question_usage SET count = count + 1 WHERE user_id = $1',
+ [userId]
+ );
+ }
+ }
+ }
+
  const result = canSeePremium
  ? await pool.query('SELECT questions, answers FROM qa_pairs')
  : await pool.query("SELECT questions, answers FROM qa_pairs WHERE tier = 'Rookie'");
