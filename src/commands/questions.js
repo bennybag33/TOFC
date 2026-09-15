@@ -4,7 +4,7 @@ const pool = new Pool({
  connectionString: process.env.POSTGRES_URL,
 });
 
-const ROOKIE_DAILY_LIMIT = 10;
+const ROOKIE_DAILY_LIMIT = 5;
 
 function levenshteinDistance(str1, str2) {
  const track = Array(str2.length + 1).fill(null).map(() =>
