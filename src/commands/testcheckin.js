@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { sendDailyCheckin } from '../../services/dailyCheckinService.js';
+import { sendDailyCheckin } from '../services/dailyCheckinService.js';
 
 export default {
   data: new SlashCommandBuilder()
